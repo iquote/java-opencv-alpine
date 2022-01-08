@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2017 Juliano Petronetto
+# Copyright (c) 2022 dilhelh
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,91 +20,45 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE
 
-FROM alpine:3.5
+FROM petronetto/opencv-alpine:latest
 
-MAINTAINER Juliano Petronetto <juliano.petronetto@gmail.com>
+MAINTAINER Guilherme Sousa <guisousa09@hotmail.com>
 
 ENV LANG=C.UTF-8
 
-# Add Edge repos
-RUN echo -e "\n\
-@edgemain http://nl.alpinelinux.org/alpine/edge/main\n\
-@edgecomm http://nl.alpinelinux.org/alpine/edge/community\n\
-@edgetest http://nl.alpinelinux.org/alpine/edge/testing"\
-  >> /etc/apk/repositories
-
 # Install required packages
-RUN apk update && apk upgrade && apk --no-cache add \
-  bash \
-  build-base \
-  ca-certificates \
-  clang-dev \
-  clang \
-  cmake \
-  coreutils \
-  curl \ 
-  freetype-dev \
-  ffmpeg-dev \
-  ffmpeg-libs \
-  gcc \
-  g++ \
-  git \
-  gettext \
-  lcms2-dev \
-  libavc1394-dev \
-  libc-dev \
-  libffi-dev \
-  libjpeg-turbo-dev \
-  libpng-dev \
-  libressl-dev \
-  libtbb@edgetest \
-  libtbb-dev@edgetest \
-  libwebp-dev \
-  linux-headers \
-  make \
-  musl \
-  openblas@edgecomm \
-  openblas-dev@edgecomm \
-  openjpeg-dev \
-  openssl \
-  python3 \
-  python3-dev \
-  tiff-dev \
-  unzip \
-  zlib-dev
+RUN apk --no-cache add \
+  wget \
+  apache-ant \
+  tesseract-ocr
 
-# Python 3 as default
-RUN ln -s /usr/bin/python3 /usr/local/bin/python && \
-  ln -s /usr/bin/pip3 /usr/local/bin/pip && \
-  pip install --upgrade pip
+WORKDIR /opt
 
-# Install NumPy
-RUN ln -s /usr/include/locale.h /usr/include/xlocale.h && \
-  pip install numpy
+# Install Java
+COPY resources/OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.gz OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.gz
+RUN tar -xf OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.gz && rm OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.gz
+ENV JAVA_HOME /opt/jdk-11.0.13+8
+ENV PATH $JAVA_HOME/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Tesseract tessdata Path configuration
+ENV TESSDATA_PREFIX /usr/share/tessdata
+
+WORKDIR /opt/opencv-3.2.0/build
 
 # Install OpenCV
-RUN mkdir /opt && cd /opt && \
-  wget https://github.com/opencv/opencv/archive/3.2.0.zip && \
-  unzip 3.2.0.zip && rm 3.2.0.zip && \
-  wget https://github.com/opencv/opencv_contrib/archive/3.2.0.zip && \
-  unzip 3.2.0.zip && rm 3.2.0.zip \
-  && \
-  cd /opt/opencv-3.2.0 && mkdir build && cd build && \
-  cmake -D CMAKE_BUILD_TYPE=RELEASE \
+RUN cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D CMAKE_C_COMPILER=/usr/bin/clang \
     -D CMAKE_CXX_COMPILER=/usr/bin/clang++ \
-    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D CMAKE_INSTALL_PREFIX=/usr/lib \
     -D INSTALL_PYTHON_EXAMPLES=OFF \
     -D INSTALL_C_EXAMPLES=OFF \
     -D WITH_FFMPEG=ON \
     -D WITH_TBB=ON \
+    -D BUILD_opencv_python2=OFF \
+    -D BUILD_opencv_python3=OFF \
     -D OPENCV_EXTRA_MODULES_PATH=/opt/opencv_contrib-3.2.0/modules \
-    -D PYTHON_EXECUTABLE=/usr/local/bin/python \
-    .. \
-  && \
-  make -j$(nproc) && make install && cd .. && rm -rf build \
-  && \
-  cp -p $(find /usr/local/lib/python3.5/site-packages -name cv2.*.so) \
-   /usr/lib/python3.5/site-packages/cv2.so && \
-   python -c 'import cv2; print("Python: import cv2 - SUCCESS")'
+    .. && \
+  make -j$(nproc) && make install && cp lib/* $JAVA_HOME/lib/. && \
+  cd .. && rm -rf build
 
+WORKDIR /opt
