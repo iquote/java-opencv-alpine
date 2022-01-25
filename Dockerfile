@@ -20,45 +20,139 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE
 
-FROM petronetto/opencv-alpine:latest
+FROM alpine:edge
 
 MAINTAINER Guilherme Sousa <guisousa09@hotmail.com>
 
 ENV LANG=C.UTF-8
 
 # Install required packages
-RUN apk --no-cache add \
+RUN apk update && apk upgrade && apk --no-cache add \
+  bash \
+  build-base \
+  ca-certificates \
+  clang-dev \
+  clang \
+  cmake \
+  coreutils \
+  curl \
+  freetype-dev \
+  ffmpeg-dev \
+  ffmpeg-libs \
+  gcc \
+  g++ \
+  git \
+  gettext \
+  lcms2-dev \
+  libavc1394-dev \
+  libc-dev \
+  libffi-dev \
+  libjpeg-turbo-dev \
+  libpng-dev \
+  libressl-dev \
+  libtbb \
+  libtbb-dev \
+  libwebp-dev \
+  linux-headers \
+  make \
+  musl \
+  openblas \
+  openblas-dev \
+  openjpeg-dev \
+  openssl \
+  python3 \
+  python3-dev \
+  tiff-dev \
+  unzip \
+  zlib-dev \
   wget \
   apache-ant \
   tesseract-ocr
 
 WORKDIR /opt
 
-# Install Java
-COPY resources/OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.gz OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.gz
-RUN tar -xf OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.gz && rm OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.gz
+# Install Java 11
+RUN wget http://www.cs.tohoku-gakuin.ac.jp/pub/Tools/OpenJDK/JDK11-HotSpot/OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.xz \
+ && tar -xvf OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.xz && rm OpenJDK11U-jdk_x64_alpine-linux_hotspot_11.0.13_8.tar.xz
 ENV JAVA_HOME /opt/jdk-11.0.13+8
 ENV PATH $JAVA_HOME/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Tesseract tessdata Path configuration
 ENV TESSDATA_PREFIX /usr/share/tessdata
 
-WORKDIR /opt/opencv-3.2.0/build
+RUN wget https://github.com/opencv/opencv/archive/4.5.1.zip \
+  && unzip 4.5.1.zip \
+  && rm 4.5.1.zip \
+  && wget https://github.com/opencv/opencv_contrib/archive/4.5.1.zip \
+  && unzip 4.5.1.zip \
+  && rm 4.5.1.zip
+
+WORKDIR /opt/opencv-4.5.1/build
 
 # Install OpenCV
-RUN cmake -D CMAKE_BUILD_TYPE=RELEASE \
-    -D CMAKE_C_COMPILER=/usr/bin/clang \
-    -D CMAKE_CXX_COMPILER=/usr/bin/clang++ \
-    -D CMAKE_INSTALL_PREFIX=/usr/lib \
-    -D INSTALL_PYTHON_EXAMPLES=OFF \
-    -D INSTALL_C_EXAMPLES=OFF \
-    -D WITH_FFMPEG=ON \
-    -D WITH_TBB=ON \
-    -D BUILD_opencv_python2=OFF \
-    -D BUILD_opencv_python3=OFF \
-    -D OPENCV_EXTRA_MODULES_PATH=/opt/opencv_contrib-3.2.0/modules \
+RUN cmake -DCMAKE_BUILD_TYPE=RELEASE \
+    -DCMAKE_C_COMPILER=/usr/bin/clang \
+    -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+    -DCMAKE_INSTALL_PREFIX=/usr/lib \
+    -DINSTALL_PYTHON_EXAMPLES=OFF \
+    -DINSTALL_C_EXAMPLES=OFF \
+    -DWITH_FFMPEG=ON \
+    -DWITH_TBB=ON \
+    -DBUILD_opencv_python2=OFF \
+    -DBUILD_opencv_python3=OFF \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_PERF_TESTS=OFF \
+    -DBUILD_opencv_alphamat=OFF \
+    -DBUILD_opencv_aruco=OFF \
+    -DBUILD_opencv_barcode=OFF \
+    -DBUILD_opencv_bgsegm=OFF \
+    -DBUILD_opencv_bioinspired=OFF \
+    -DBUILD_opencv_ccalib=OFF \
+    -DBUILD_opencv_cnn_3dobj=OFF \
+    -DBUILD_opencv_datasets=OFF \
+    -DBUILD_opencv_dnn_objdetect=OFF \
+    -DBUILD_opencv_dnn_superres=OFF \
+    -DBUILD_opencv_dpm=OFF \
+    -DBUILD_opencv_dnns_easily_fooled=OFF \
+    -DBUILD_opencv_face=OFF \
+    -DBUILD_opencv_freetype=OFF \
+    -DBUILD_opencv_fuzzy=OFF \
+    -DBUILD_opencv_hdf=OFF \
+    -DBUILD_opencv_hfs=OFF \
+    -DBUILD_opencv_img_hash=OFF \
+    -DBUILD_opencv_intensity_transform=OFF \
+    -DBUILD_opencv_julia=OFF \
+    -DBUILD_opencv_line_descriptor=OFF \
+    -DBUILD_opencv_matlab=OFF \
+    -DBUILD_opencv_mcc=OFF \
+    -DBUILD_opencv_optflow=OFF \
+    -DBUILD_opencv_ovis=OFF \
+    -DBUILD_opencv_phase_unwrapping=OFF \
+    -DBUILD_opencv_plot=OFF \
+    -DBUILD_opencv_quality=OFF \
+    -DBUILD_opencv_rapid=OFF \
+    -DBUILD_opencv_reg=OFF \
+    -DBUILD_opencv_rgbd=OFF \
+    -DBUILD_opencv_saliency=OFF \
+    -DBUILD_opencv_sfm=OFF \
+    -DBUILD_opencv_shape=OFF \
+    -DBUILD_opencv_stereo=OFF \
+    -DBUILD_opencv_structured_light=OFF \
+    -DBUILD_opencv_superres=OFF \
+    -DBUILD_opencv_surface_matching=OFF \
+    -DBUILD_opencv_text=ON \
+    -DBUILD_opencv_tracking=OFF \
+    -DBUILD_opencv_videostab=OFF \
+    -DBUILD_opencv_viz=OFF \
+    -DBUILD_opencv_wechat_qrcode=OFF \
+    -DBUILD_opencv_xfeatures2d=OFF \
+    -DBUILD_opencv_ximgproc=OFF \
+    -DBUILD_opencv_xobjdetect=OFF \
+    -DBUILD_opencv_xphoto=OFF \
+    -DOPENCV_EXTRA_MODULES_PATH=/opt/opencv_contrib-4.5.1/modules \
     .. && \
-  make -j$(nproc) && make install && cp lib/* $JAVA_HOME/lib/. && \
-  cd .. && rm -rf build
+  make -j$(nproc) && make install \
+  && cp lib/* $JAVA_HOME/lib/. && cp bin/*.jar $JAVA_HOME/lib/. \
+  && cd .. && rm -rf build
 
-WORKDIR /opt
+  WORKDIR /opt

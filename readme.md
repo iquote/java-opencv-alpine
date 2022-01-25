@@ -1,13 +1,13 @@
 # OpenCV Alpine Docker Image for Java Applications
 
-Run `docker pull dilhelh/java-opencv-alpine:latest`
+Run `docker pull dilhelh/java-opencv-alpine:alpine_edge`
 
 ## Example usage
 
 ``` yml
 services:
   tesseract_api:
-    image: dilhelh/java-opencv-alpine:latest
+    image: dilhelh/java-opencv-alpine:alpine_edge
     container_name: tesseract_api
     volumes:
     - type: bind
